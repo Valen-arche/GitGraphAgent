@@ -1,11 +1,7 @@
 import Fastify from "fastify";
 import cors from "@fastify/cors";
-import {
-  ingestRepository,
-  detectLanguages,
-  buildModuleGraph,
-  parseGithubRepoUrl,
-} from "@git-graph-agent/analysis-core";
+import { ingestRepository, detectLanguages, buildModuleGraph } from "@git-graph-agent/analysis-core";
+import { toErrorResponse } from "./errorResponse.js";
 
 const app = Fastify({ logger: true });
 await app.register(cors, { origin: true });
@@ -15,20 +11,15 @@ app.get("/health", async () => ({ status: "ok" }));
 app.post<{ Body: { repoUrl?: string } }>("/analyze", async (request, reply) => {
   const repoUrl = request.body?.repoUrl;
   if (!repoUrl) {
-    return reply.code(400).send({ error: "repoUrl is required" });
-  }
-
-  try {
-    parseGithubRepoUrl(repoUrl); // fail fast on bad input before touching the filesystem/network
-  } catch (err) {
-    return reply.code(400).send({ error: (err as Error).message });
+    return reply.code(400).send({ error: "repoUrl is required", code: "invalid_url" });
   }
 
   let ingested;
   try {
     ingested = await ingestRepository(repoUrl);
   } catch (err) {
-    return reply.code(422).send({ error: (err as Error).message });
+    const { status, body } = toErrorResponse(err, app.log);
+    return reply.code(status).send(body);
   }
 
   try {
@@ -37,6 +28,9 @@ app.post<{ Body: { repoUrl?: string } }>("/analyze", async (request, reply) => {
       buildModuleGraph(ingested.localPath),
     ]);
     return { repoUrl, commitSha: ingested.commitSha, languages, graph };
+  } catch (err) {
+    const { status, body } = toErrorResponse(err, app.log);
+    return reply.code(status).send(body);
   } finally {
     await ingested.cleanup();
   }

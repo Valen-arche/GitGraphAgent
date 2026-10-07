@@ -1,0 +1,32 @@
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid #2a2f3d;
+  border-top-color: #5b6ee8;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.skeleton-block {
+  background: #171a23;
+  border: 1px solid #2a2f3d;
+  border-radius: 8px;
+  animation: pulse 1.4s ease-in-out infinite;
+}

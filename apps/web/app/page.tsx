@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { ModuleGraphView } from "./ModuleGraphView";
+import { AnalyzingStatus } from "./AnalyzingStatus";
+import { describeError } from "./errorMessages";
 import type { AnalyzeResponse } from "./types";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
@@ -15,21 +17,33 @@ export default function Home() {
   async function analyze() {
     setLoading(true);
     setError(null);
-    setResult(null);
+    setResult(null); // nothing renders below until a full, successful response lands
+
+    let res: Response;
     try {
-      const res = await fetch(`${API_URL}/analyze`, {
+      res = await fetch(`${API_URL}/analyze`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ repoUrl }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? `Error ${res.status}`);
-      setResult(data);
-    } catch (err) {
-      setError((err as Error).message);
-    } finally {
+    } catch {
+      // fetch() itself threw: our API is unreachable (down, wrong URL, CORS, DNS).
+      // This is NOT a GitHub permissions problem, so it gets its own message instead
+      // of surfacing the browser's raw "Failed to fetch".
+      setError(describeError("api_unreachable", ""));
       setLoading(false);
+      return;
     }
+
+    const data = await res.json().catch(() => null);
+    if (!res.ok) {
+      setError(describeError(data?.code ?? "unknown", data?.error ?? `Error ${res.status}`));
+      setLoading(false);
+      return;
+    }
+
+    setResult(data as AnalyzeResponse);
+    setLoading(false);
   }
 
   return (
@@ -67,9 +81,24 @@ export default function Home() {
         </button>
       </div>
 
-      {error && <p style={{ color: "#f28b82" }}>{error}</p>}
+      {loading && <AnalyzingStatus />}
 
-      {result && (
+      {!loading && error && (
+        <p
+          role="alert"
+          style={{
+            color: "#f28b82",
+            background: "#2a1416",
+            border: "1px solid #5a2328",
+            borderRadius: 8,
+            padding: "12px 16px",
+          }}
+        >
+          {error}
+        </p>
+      )}
+
+      {!loading && result && (
         <>
           <section style={{ marginBottom: 24 }}>
             <h2 style={{ fontSize: 16, opacity: 0.8 }}>
