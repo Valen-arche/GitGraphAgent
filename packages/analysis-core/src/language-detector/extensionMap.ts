@@ -1,0 +1,43 @@
+/** Minimal extension → language map. Extend as new languages matter for real repos. */
+export const EXTENSION_TO_LANGUAGE: Record<string, string> = {
+  ".ts": "TypeScript",
+  ".tsx": "TypeScript",
+  ".js": "JavaScript",
+  ".jsx": "JavaScript",
+  ".mjs": "JavaScript",
+  ".cjs": "JavaScript",
+  ".py": "Python",
+  ".go": "Go",
+  ".java": "Java",
+  ".kt": "Kotlin",
+  ".kts": "Kotlin",
+  ".rb": "Ruby",
+  ".rs": "Rust",
+  ".php": "PHP",
+  ".c": "C",
+  ".h": "C",
+  ".cpp": "C++",
+  ".hpp": "C++",
+  ".cs": "C#",
+  ".swift": "Swift",
+  ".scala": "Scala",
+  ".sh": "Shell",
+  ".sql": "SQL",
+  ".html": "HTML",
+  ".css": "CSS",
+  ".scss": "SCSS",
+  ".vue": "Vue",
+};
+
+/** Directories never worth descending into when sizing up a repo's languages. */
+export const IGNORED_DIR_NAMES = new Set([
+  ".git",
+  "node_modules",
+  "dist",
+  "build",
+  "out",
+  "vendor",
+  ".next",
+  ".turbo",
+  "coverage",
+]);
